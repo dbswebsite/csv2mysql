@@ -26,9 +26,7 @@
 // set some high values for command line
 ini_set('memory_limit','512M');
 set_time_limit( 0 );
-
-new csv2mysql();
-
+error_reporting ( E_ALL );
 
 /**
 * @class csv2mysql
@@ -99,6 +97,21 @@ class csv2mysql
 		if ( $varchar_size )	$this->varchar_size = $varchar_size;
 		if ( $custom_sql )		$this->custom_sql = $custom_sql;
 
+	}
+
+	/**
+	* @return void
+	*
+	* Run all the sub-processes.
+	*
+	*
+	* @author Hal Burgiss  2012-11-29
+	*/
+	public function exec() 
+	{
+
+		if ( $this->debug ) echo "Running exec commands\n";
+
 		if ( ! is_file( $this->csv ) ) { 
 			$this->help( "Cannot find your csv file, aborting\n" );
 		}
@@ -129,6 +142,7 @@ class csv2mysql
 		// run code for AFTER the data is imported
 		$this->post_process();
 
+
 	}
 
 	/**
@@ -138,6 +152,8 @@ class csv2mysql
 	*/
 	protected function add_data() 
 	{
+		if ( $this->debug ) echo "adding data now ...\n";
+
 		$row = 0;
 		$handle = fopen( $this->csv, "r" );
 		if ( ! $handle ) { 
@@ -162,8 +178,8 @@ class csv2mysql
 			$cdata = '("' . implode( '","', $data ) . '")';
 			
 			// construct query from pieces
-			$sql = "INSERT $ignore INTO $this->table_name VALUES " . $cdata;
-			
+			$sql = "INSERT $ignore INTO `$this->table_name` VALUES " . $cdata;
+		
 			// make it stick
 			mysql_query( $sql ) || die("Error adding data table at $row: " . mysql_error() );
 			$row++;
@@ -175,7 +191,7 @@ class csv2mysql
 			
 			// add a unique key as first column
 			$first_col_id = $this->table_name . '_id';
-			$sql = "ALTER TABLE $this->table_name ADD $first_col_id int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT FIRST";
+			$sql = "ALTER TABLE `$this->table_name` ADD `$first_col_id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT FIRST";
 			mysql_query( $sql ) || die( 'Error creating index' );
 		}
 
@@ -198,7 +214,7 @@ class csv2mysql
 		if ( ! $this->create ) {
 		
 			if ( $this->truncate ) {
-				mysql_query( "TRUNCATE $this->table_name" );
+				mysql_query( "TRUNCATE `$this->table_name`" );
 			}
 
 			// if we aren't generating the table, then we should not inject the primary key column
@@ -207,7 +223,7 @@ class csv2mysql
 		}
 
 		// (re)create table.
-		mysql_query( "DROP TABLE IF EXISTS $this->table_name" ) || die('Error dropping table');
+		mysql_query( "DROP TABLE IF EXISTS `$this->table_name`" ) || die('Error dropping table' . $this->table_name);
 
 		$handle = fopen( "$this->csv", "r" );
 
@@ -221,7 +237,7 @@ class csv2mysql
 			$this->columns = $_columns;
 		}
 		
-		$sql= "CREATE TABLE IF NOT EXISTS $this->table_name (";
+		$sql= "CREATE TABLE IF NOT EXISTS `$this->table_name` (";
 		for( $i=0;$i<count( $this->columns ); $i++ ) {
 			
 			// clean up the header row
@@ -235,7 +251,6 @@ class csv2mysql
 		$sql = substr($sql,0,strlen($sql)-2);
 		$sql .= ')';
 		fclose( $handle );
-
 		mysql_query( $sql ) || die( 'Error creating table' );
 		if ( $this->debug ) echo "Table is created and ready\n";
 	}
@@ -252,6 +267,8 @@ class csv2mysql
 		if ( ! empty( $this->custom_sql ) ) {
 			if ( $this->debug ) echo "Running post processing code\n";
 			if ( is_file( $this->custom_sql ) ) {
+
+				// not tested :(
 				$out = shell_exec( "mysql -h$this->db_host -u$this->db_user -p$this->db_password $this->db < $this->custom_sql" );
 				if ( $out ) {
 					die( $out );
