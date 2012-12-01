@@ -8,14 +8,11 @@
 * A header row is required for the csv, and can be optionally used to create the 
 * table column names. 
 *
-* @example: invoke from a shell prompt, eg: $php csv2mysql.php myconfig.php mycsv.csv
+* @example: invoke from a shell prompt, eg: $php csv2mysql.php
 *
 * Configuration: 
 * 
-* All variables can be a) set in script explicity or by extending b) set in an
-* external file named config.php in the same folder as this script, c) in a php
-* file referenced as the first argument on the command line. If there is a
-* second command line argument, it is the csv file to be parsed.
+* All variables can be set in script explicity or better, by extending.
 *
 * NOTE: The csv is assumed to come from a trusted source.
 *
@@ -24,7 +21,7 @@
 
 
 // set some high values for command line
-ini_set('memory_limit','512M');
+ini_set( 'memory_limit','512M' );
 set_time_limit( 0 );
 error_reporting ( E_ALL );
 
@@ -34,7 +31,6 @@ error_reporting ( E_ALL );
 class csv2mysql
 {
 
-	// all these vars can be set in an external config.php file.
 	protected $csv			= null;		// csv file name, *required*
 	protected $db			= null;		// database name, will be named from the csv if is_null.
 	protected $table_name	= null;		// table name, will be named from the csv if is_null.
@@ -43,6 +39,7 @@ class csv2mysql
 	protected $db_password	= '';
 
 	protected $debug			= true;
+	public    $autoexec			= false;	// run from constructor
 	protected $create			= true;	// dynamically create table structure from csv header or not. TODO: not tested if this is FALSE :/
 	protected $insert_ignore		= false;	// INSERT IGNORE syntax for possible duplicate keys
 	protected $truncate			= true;	// whether to truncate the table or not (only meaningul if using a predefined table structure)
@@ -59,44 +56,9 @@ class csv2mysql
 	*/
 	function __construct() 
 	{
-		global $argv;
-
-		if ( is_file( 'config.php' ) ) {
-			
-			// if there is a config.php file here, use it for configuration.
-			require 'config.php';
+		if ( $this->autoexec ) {
+			$this->exec();
 		}
-
-		// check for command line arg
-		if ( $argv[1] ) {
-			if ( is_file( $argv[1] ) ) {
-				
-				// if its a file, assume its a config file.
-				require $argv[1];
-			}
-
-			if ( $argv[2] && is_file( $argv[2] ) ) {
-
-				// if its a file, assume its the csv.
-				$this->csv = $argv[2];
-			}
-		}
-
-		// look for vars in a config file, if we have one.
-		if ( $db )			$this->db = $db;
-		if ( $csv )			$this->csv = $csv;
-		if ( $table_name )		$this->table_name = $table_name;
-		if ( $db_host )		$this->db_host = $db_host;
-		if ( $db_user )		$this->db_user = $db_user;
-		if ( $db_password )		$this->db_password = $db_password;
-		if ( $debug )			$this->debug = $debug;
-		if ( $create )			$this->create = $create;
-		if ( $truncate )		$this->truncate = $truncate;
-		if ( $insert_ignore )	$this->insert_ignore = $insert_ignore;
-		if ( $first_column_key )	$this->first_column_key = $first_column_key;
-		if ( $varchar_size )	$this->varchar_size = $varchar_size;
-		if ( $custom_sql )		$this->custom_sql = $custom_sql;
-
 	}
 
 	/**
@@ -104,8 +66,6 @@ class csv2mysql
 	*
 	* Run all the sub-processes.
 	*
-	*
-	* @author Hal Burgiss  2012-11-29
 	*/
 	public function exec() 
 	{
@@ -142,13 +102,12 @@ class csv2mysql
 		// run code for AFTER the data is imported
 		$this->post_process();
 
-
 	}
 
 	/**
 	* @return void
 	*
-	* Quick and dirty -- populate a database table from a csv.
+	* Quick and dirty -- populate a database table from a csv file.
 	*/
 	protected function add_data() 
 	{
@@ -286,7 +245,6 @@ class csv2mysql
 	*
 	* Remove characters that are illegal or don't make for good mysql names.
 	*
-	* @author Hal Burgiss  2012-11-26
 	*/
 	protected function sanitize( $name ) 
 	{
