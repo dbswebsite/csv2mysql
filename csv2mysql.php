@@ -17,6 +17,24 @@
 * NOTE: The csv is assumed to come from a trusted source.
 *
 * @author programming@dbswebsite.com  2010-10-27
+*
+*
+* LICENSE
+*
+*    This program is free software: you can redistribute it and/or modify
+*    it under the terms of the GNU General Public License as published by
+*    the Free Software Foundation, either version 3 of the License, or
+*    (at your option) any later version.
+*
+*    This program is distributed in the hope that it will be useful,
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*    GNU General Public License for more details.
+*
+*    You should have received a copy of the GNU General Public License
+*    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*
 */
 
 
@@ -38,8 +56,8 @@ class csv2mysql
 	protected $db_user		= 'root';
 	protected $db_password	= '';
 
-	protected $debug			= true;
 	public    $autoexec			= false;	// run from constructor
+	protected $debug			= true;
 	protected $create			= true;	// dynamically create table structure from csv header or not. TODO: not tested if this is FALSE :/
 	protected $insert_ignore		= false;	// INSERT IGNORE syntax for possible duplicate keys
 	protected $truncate			= true;	// whether to truncate the table or not (only meaningul if using a predefined table structure)
@@ -47,6 +65,7 @@ class csv2mysql
 	protected $columns			= array(); // Column names, if empty the csv 1st row header titles will be used.
 	protected $custom_sql		= null;	// custom sql to run after the table has been built, can be a reference to a file, or inline sql statement(s)
 	protected $varchar_size		= 255;
+	protected $limit			= false; 	// integer > 0, limit number of records (for testing purposes typically)
 
 
 	/**
@@ -142,6 +161,11 @@ class csv2mysql
 			// make it stick
 			mysql_query( $sql ) || die("Error adding data table at $row: " . mysql_error() );
 			$row++;
+
+			if ( $this->limit && $row > $this->limit ) {
+				if ( $this->debug ) echo "Breaking at: # $row row\n";
+				break;
+			}
 			if ( $this->debug ) echo "Adding row: # $row\n";
 		}
 
@@ -268,12 +292,9 @@ class csv2mysql
 			- populate the table with the csv data rows
 
 		This script is intended to be run from the command line. All variables
-		can be set in a script named config.php in the same folder as this script, or 
-		referenced as the first argument on the command line, or of course by
-		extending the class. If there is a second command line argument, it
-		is the path to the csv file that will be parse.
+		can be set by extending the class. 
 
-		The newly created table will have an primary key index created (by default). 
+		The newly created table will have a primary key index created (default configuration). 
 		All other columns will be created as VARCHARs.
 ";
 		die();
