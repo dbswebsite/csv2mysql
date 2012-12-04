@@ -51,20 +51,20 @@ class csv2mysql
 
 	protected $csv			= null;		// csv file name, *required*
 	protected $db			= null;		// database name, will be named from the csv if is_null.
-	protected $table_name	= null;		// table name, will be named from the csv if is_null.
+	protected $table_name		= null;		// table name, will be named from the csv if is_null.
 	protected $db_host		= 'localhost';
 	protected $db_user		= 'root';
-	protected $db_password	= '';
+	protected $db_password		= '';
 
 	public    $autoexec			= false;	// run from constructor
 	protected $debug			= true;
 	protected $create			= true;	// dynamically create table structure from csv header or not. TODO: not tested if this is FALSE :/
 	protected $insert_ignore		= false;	// INSERT IGNORE syntax for possible duplicate keys
 	protected $truncate			= true;	// whether to truncate the table or not (only meaningul if using a predefined table structure)
-	protected $first_column_key	= true;	// Inserts a unique index as the first column, if true.
+	protected $first_column_key		= true;	// Inserts a unique index as the first column, if true.
 	protected $columns			= array(); // Column names, if empty the csv 1st row header titles will be used.
-	protected $custom_sql		= null;	// custom sql to run after the table has been built, can be a reference to a file, or inline sql statement(s)
-	protected $varchar_size		= 255;
+	protected $custom_sql			= null;	// custom sql to run after the table has been built, can be a reference to a file, or inline sql statement(s)
+	protected $varchar_size			= 255;
 	protected $limit			= false; 	// integer > 0, limit number of records (for testing purposes typically)
 
 
@@ -176,10 +176,6 @@ class csv2mysql
 			$first_col_id = $this->table_name . '_id';
 			$sql = "ALTER TABLE `$this->table_name` ADD `$first_col_id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT FIRST";
 			mysql_query( $sql ) || die( 'Error creating index' );
-		}
-
-		if ( ! empty( $this->custom_sql ) ) {
-			mysql_query( $this->custom_sql ) || die( "Error running custom_sql: " . mysql_error() );;
 		}
 
 		if ( $this->debug ) echo "Done.\n";
